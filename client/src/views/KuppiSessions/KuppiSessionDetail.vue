@@ -139,6 +139,30 @@
             </div>
           </div>
 
+          <!-- Edit/Delete Actions (for creator only) -->
+          <div v-if="isCreator" class="flex gap-3 mb-3">
+            <button
+              id="btn-edit-session"
+              @click="openEditModal"
+              class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 dark:text-amber-400 font-semibold text-sm transition-colors border border-amber-200 dark:border-amber-800"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Session
+            </button>
+            <button
+              id="btn-delete-session"
+              @click="confirmDelete"
+              class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-error-50 hover:bg-error-100 text-error-700 dark:bg-error-900/20 dark:hover:bg-error-900/30 dark:text-error-400 font-semibold text-sm transition-colors border border-error-200 dark:border-error-800"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete Session
+            </button>
+          </div>
+
           <!-- Join Button -->
           <button
             id="btn-join-session"
@@ -274,12 +298,256 @@
         </div>
       </div>
     </transition>
+
+    <!-- ─── Edit Modal ─── -->
+    <transition name="fade">
+      <div
+        v-if="showEditModal"
+        class="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        @click.self="closeEditModal"
+      >
+        <div class="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+          <!-- Modal Header -->
+          <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-900">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Session</h2>
+            <button
+              @click="closeEditModal"
+              class="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal Form -->
+          <form @submit.prevent="handleEditSubmit" class="px-6 py-5 space-y-4">
+            <!-- Form Error -->
+            <div
+              v-if="editFormError"
+              class="px-4 py-3 rounded-lg bg-error-50 border border-error-200 text-error-700 text-sm dark:bg-error-900/20"
+            >
+              {{ editFormError }}
+            </div>
+
+            <!-- Title -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Session Title <span class="text-error-500">*</span>
+              </label>
+              <input
+                v-model="editForm.title"
+                type="text"
+                maxlength="80"
+                class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                required
+              />
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Description <span class="text-error-500">*</span>
+              </label>
+              <textarea
+                v-model="editForm.description"
+                rows="4"
+                maxlength="300"
+                class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition resize-none"
+                required
+              ></textarea>
+            </div>
+
+            <!-- Subject -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Subject / Module <span class="text-error-500">*</span>
+              </label>
+              <input
+                v-model="editForm.subject"
+                type="text"
+                class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                required
+              />
+            </div>
+
+            <!-- Year and Semester -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Year <span class="text-error-500">*</span>
+                </label>
+                <select
+                  v-model="editForm.year"
+                  class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                  required
+                >
+                  <option value="">Select year</option>
+                  <option value="Year 1">Year 1</option>
+                  <option value="Year 2">Year 2</option>
+                  <option value="Year 3">Year 3</option>
+                  <option value="Year 4">Year 4</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Semester <span class="text-error-500">*</span>
+                </label>
+                <select
+                  v-model="editForm.semester"
+                  class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                  required
+                >
+                  <option value="">Select semester</option>
+                  <option value="Semester 1">Semester 1</option>
+                  <option value="Semester 2">Semester 2</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Date, Time, Duration -->
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Date <span class="text-error-500">*</span>
+                </label>
+                <input
+                  v-model="editForm.date"
+                  type="date"
+                  class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                  required
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Time <span class="text-error-500">*</span>
+                </label>
+                <input
+                  v-model="editForm.time"
+                  type="time"
+                  class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                  required
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Duration <span class="text-error-500">*</span>
+                </label>
+                <select
+                  v-model="editForm.duration"
+                  class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                  required
+                >
+                  <option value="">Select duration</option>
+                  <option value="30 minutes">30 minutes</option>
+                  <option value="1 hour">1 hour</option>
+                  <option value="1.5 hours">1.5 hours</option>
+                  <option value="2 hours">2 hours</option>
+                  <option value="2.5 hours">2.5 hours</option>
+                  <option value="3 hours">3 hours</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Teams Link -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Microsoft Teams Link <span class="text-error-500">*</span>
+              </label>
+              <input
+                v-model="editForm.teamsLink"
+                type="url"
+                placeholder="https://teams.microsoft.com/..."
+                class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                required
+              />
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800 mt-6">
+              <button
+                type="button"
+                @click="closeEditModal"
+                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                :disabled="editFormSubmitting"
+                class="px-5 py-2 text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2"
+              >
+                <svg v-if="editFormSubmitting" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                {{ editFormSubmitting ? "Saving..." : "Save Changes" }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- ─── Delete Confirmation Modal ─── -->
+    <transition name="fade">
+      <div
+        v-if="showDeleteConfirm"
+        class="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        @click.self="showDeleteConfirm = false"
+      >
+        <div class="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+          <!-- Modal Header -->
+          <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <svg class="w-5 h-5 text-error-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0 0v2m0-6v-2m0 0V7m0 6h2m-2 0h-2m0 0H7m0 0V7" />
+              </svg>
+              Delete Session?
+            </h2>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="px-6 py-5">
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Are you sure you want to delete this session? This action cannot be undone.
+            </p>
+            <div class="p-4 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg">
+              <p class="text-sm font-medium text-error-800 dark:text-error-200">
+                {{ session?.title }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800">
+            <button
+              @click="showDeleteConfirm = false"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              @click="handleDelete"
+              :disabled="deleteSubmitting"
+              class="px-5 py-2 text-sm font-medium text-white bg-error-600 hover:bg-error-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2"
+            >
+              <svg v-if="deleteSubmitting" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              {{ deleteSubmitting ? "Deleting..." : "Delete Session" }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
     </div>
   </AdminLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted, reactive, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import AdminLayout from "@/components/layout/AdminLayout.vue";
 import type { MongoKuppiSession } from "@/ts/mongo";
@@ -298,6 +566,8 @@ const {
   sessionParticipants,
   userRegistrations,
   registrationError,
+  updateKuppiSession,
+  deleteKuppiSession,
 } = useKuppiSessionsStore();
 
 const session = ref<MongoKuppiSession | null>(null);
@@ -308,13 +578,47 @@ const showRegistrationModal = ref(false);
 const registrationFormError = ref<string | null>(null);
 const registrationFormSubmitting = ref(false);
 
+// Edit modal state
+const showEditModal = ref(false);
+const editFormError = ref<string | null>(null);
+const editFormSubmitting = ref(false);
+
+// Delete confirmation state
+const showDeleteConfirm = ref(false);
+const deleteSubmitting = ref(false);
+
 const blankRegistrationForm = () => ({
   studentId: "",
   year: "",
   semester: "",
 });
 
+const blankEditForm = () => ({
+  title: "",
+  description: "",
+  subject: "",
+  year: "",
+  semester: "",
+  date: "",
+  time: "",
+  duration: "",
+  teamsLink: "",
+});
+
 const registrationForm = reactive(blankRegistrationForm());
+const editForm = reactive(blankEditForm());
+
+// Computed property to check if current user is the creator
+const isCreator = computed(() => {
+  if (!session.value) return false;
+  const authUser = readAuthUser();
+  if (!authUser || !authUser.username) return false;
+  // Case-insensitive comparison
+  const userCreatedBy = (session.value.createdBy || "").trim().toLowerCase();
+  const userUsername = (authUser.username || "").trim().toLowerCase();
+  console.log('[DEBUG] Checking creator - createdBy:', userCreatedBy, 'username:', userUsername);
+  return userUsername === userCreatedBy;
+});
 
 const formatDate = (dateStr: string) => {
   const d = new Date(dateStr + "T00:00:00");
@@ -392,6 +696,118 @@ const handleRegistrationFormSubmit = async () => {
     alert("Successfully registered for the session!");
   } else {
     registrationFormError.value = registrationError.value ?? "Failed to register. Please try again.";
+  }
+};
+
+const openEditModal = () => {
+  if (!session.value) return;
+  
+  // Populate the edit form with current session data
+  Object.assign(editForm, {
+    title: session.value.title,
+    description: session.value.description,
+    subject: session.value.subject,
+    year: session.value.year,
+    semester: session.value.semester,
+    date: session.value.date,
+    time: session.value.time,
+    duration: session.value.duration,
+    teamsLink: session.value.teamsLink,
+  });
+  
+  showEditModal.value = true;
+  editFormError.value = null;
+};
+
+const closeEditModal = () => {
+  showEditModal.value = false;
+  editFormError.value = null;
+  Object.assign(editForm, blankEditForm());
+};
+
+const handleEditSubmit = async () => {
+  // Validate all required fields
+  if (!editForm.title.trim() || !editForm.description.trim() || !editForm.subject.trim() ||
+      !editForm.year || !editForm.semester || !editForm.date || !editForm.time || 
+      !editForm.duration || !editForm.teamsLink.trim()) {
+    editFormError.value = "All fields are required";
+    return;
+  }
+
+  // Validate date is not in the past
+  const selectedDate = new Date(editForm.date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (selectedDate < today) {
+    editFormError.value = "Session date cannot be in the past";
+    return;
+  }
+
+  // Validate Teams link
+  try {
+    new URL(editForm.teamsLink);
+  } catch {
+    editFormError.value = "Please enter a valid URL for the Teams link";
+    return;
+  }
+
+  if (!session.value?._id) return;
+
+  const authUser = readAuthUser();
+  if (!authUser) {
+    editFormError.value = "You must be logged in to edit a session";
+    return;
+  }
+
+  editFormSubmitting.value = true;
+  editFormError.value = null;
+
+  const payload = {
+    ...editForm,
+    // Keep the original creator - don't allow changing createdBy
+    createdBy: session.value.createdBy,
+  };
+
+  const result = await updateKuppiSession(session.value._id, payload);
+
+  editFormSubmitting.value = false;
+
+  if (result) {
+    // Update the local session object
+    session.value = result;
+    closeEditModal();
+    alert("Session updated successfully!");
+  } else {
+    editFormError.value = error.value ?? "Failed to update session. Please try again.";
+  }
+};
+
+const confirmDelete = () => {
+  showDeleteConfirm.value = true;
+};
+
+const handleDelete = async () => {
+  if (!session.value?._id) return;
+
+  const authUser = readAuthUser();
+  if (!authUser) {
+    alert("You must be logged in to delete a session");
+    return;
+  }
+
+  deleteSubmitting.value = true;
+
+  const success = await deleteKuppiSession(session.value._id, authUser.username ?? "Unknown");
+
+  deleteSubmitting.value = false;
+  showDeleteConfirm.value = false;
+
+  if (success) {
+    alert("Session deleted successfully!");
+    router.push("/kuppi-sessions");
+  } else {
+    alert(error.value ?? "Failed to delete session. Please try again.");
   }
 };
 

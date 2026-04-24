@@ -156,3 +156,4 @@ Browser (Vue 3)  →  REST API (Express :4000)  →  MongoDB
 ```
 
 The frontend talks to the backend via the `VITE_API_URL` environment variable. All data is stored in MongoDB.
+Hi

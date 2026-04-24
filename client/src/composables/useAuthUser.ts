@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 
 type AuthUser = {
+  _id?: string
   username?: string
   student_id?: string
   faculty_id?: string

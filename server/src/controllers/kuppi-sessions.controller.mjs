@@ -115,3 +115,119 @@ export async function createKuppiSession(req, res, next) {
     next(error);
   }
 }
+
+export async function updateKuppiSession(req, res, next) {
+  try {
+    const sessionId = toObjectId(req.params.id);
+    if (!sessionId) {
+      res.status(400).json({ error: "Invalid session id" });
+      return;
+    }
+
+    const db = await getDb();
+    const session = await db
+      .collection("kuppi_sessions")
+      .findOne({ _id: sessionId });
+
+    if (!session) {
+      res.status(404).json({ error: "Kuppi session not found" });
+      return;
+    }
+
+    // Authorization check: verify the user is the creator
+    // The createdBy field from the request body should match the session's createdBy
+    const requestCreatedBy = req.body.createdBy;
+    if (!requestCreatedBy) {
+      res.status(400).json({ error: "Missing authorization information" });
+      return;
+    }
+    
+    // Case-insensitive comparison
+    const sessionCreator = (session.createdBy || "").toLowerCase().trim();
+    const requestCreator = (requestCreatedBy || "").toLowerCase().trim();
+    
+    if (sessionCreator !== requestCreator) {
+      res.status(403).json({ error: "You can only update sessions you created" });
+      return;
+    }
+
+    // Validate the updated payload (partial update allowed)
+    const { valid, errors, value } = validateKuppiSessionPayload(req.body, { partial: true });
+    if (!valid) {
+      res.status(400).json({ error: "Validation failed", details: errors });
+      return;
+    }
+
+    // Calculate status based on updated date or existing date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sessionDate = new Date(value.date || session.date);
+    sessionDate.setHours(0, 0, 0, 0);
+    
+    let status = "UPCOMING";
+    if (sessionDate < today) {
+      status = "PASSED";
+    } else if (sessionDate.getTime() === today.getTime()) {
+      status = "ONGOING";
+    }
+
+    // Prepare update document
+    const updateDoc = {
+      ...value,
+      status,
+      updatedAt: new Date(),
+    };
+
+    // Update the session
+    const result = await db
+      .collection("kuppi_sessions")
+      .findOneAndUpdate({ _id: sessionId }, { $set: updateDoc }, { returnDocument: "after" });
+
+    res.json(result.value);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function deleteKuppiSession(req, res, next) {
+  try {
+    const sessionId = toObjectId(req.params.id);
+    if (!sessionId) {
+      res.status(400).json({ error: "Invalid session id" });
+      return;
+    }
+
+    const db = await getDb();
+    const session = await db
+      .collection("kuppi_sessions")
+      .findOne({ _id: sessionId });
+
+    if (!session) {
+      res.status(404).json({ error: "Kuppi session not found" });
+      return;
+    }
+
+    // Authorization check: verify the user is the creator
+    const requestCreatedBy = req.body.createdBy || req.query.createdBy;
+    if (!requestCreatedBy) {
+      res.status(400).json({ error: "Missing authorization information" });
+      return;
+    }
+    
+    // Case-insensitive comparison
+    const sessionCreator = (session.createdBy || "").toLowerCase().trim();
+    const requestCreator = (requestCreatedBy || "").toLowerCase().trim();
+    
+    if (sessionCreator !== requestCreator) {
+      res.status(403).json({ error: "You can only delete sessions you created" });
+      return;
+    }
+
+    // Delete the session
+    await db.collection("kuppi_sessions").deleteOne({ _id: sessionId });
+
+    res.json({ message: "Kuppi session deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+}

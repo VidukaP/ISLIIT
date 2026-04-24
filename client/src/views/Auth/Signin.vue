@@ -229,7 +229,7 @@ const handleSubmit = async () => {
 
   submitting.value = true
   try {
-    const response = await fetch(`${apiUrl}/api/auth/signin`, {
+    const response = await fetch(`${apiUrl}/auth/signin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -257,7 +257,7 @@ const handleSubmit = async () => {
       const student_id = data.username
       if (auth_user_id || student_id) {
         try {
-          await fetch(`${apiUrl}/api/p-helper/presence/update`, {
+          await fetch(`${apiUrl}/p-helper/presence/update`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

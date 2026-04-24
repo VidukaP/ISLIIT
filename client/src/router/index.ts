@@ -126,12 +126,63 @@ const router = createRouter({
       component: () => import('../views/KuppiSessions/CreateKuppiSession.vue'),
       meta: { title: 'Create a Kuppi Session' },
     },
+    // Sub-Feature: Quizzes
+    {
+      path: '/kuppi-sessions/quizzes',
+      name: 'Quizzes',
+      component: () => import('../views/KuppiSessions/Quizzes.vue'),
+      meta: { title: 'Quizzes' },
+    },
+    {
+      path: '/kuppi-sessions/quizzes/:id',
+      name: 'QuizDetail',
+      component: () => import('../views/KuppiSessions/QuizDetail.vue'),
+      meta: { title: 'Quiz Details' },
+    },
     // Session Details (Supporting route)
     {
       path: '/kuppi-sessions/:id',
       name: 'KuppiSessionDetail',
       component: () => import('../views/KuppiSessions/KuppiSessionDetail.vue'),
       meta: { title: 'Kuppi Session Details' },
+    },
+    // Sub-Feature: Study Materials
+    {
+      path: '/kuppi-sessions/study-materials',
+      name: 'StudyMaterials',
+      component: () => import('../views/KuppiSessions/StudyMaterials.vue'),
+      meta: { title: 'Study Materials' },
+    },
+    {
+      path: '/kuppi-sessions/study-materials/upload',
+      name: 'UploadStudyMaterial',
+      component: () => import('../views/KuppiSessions/UploadStudyMaterial.vue'),
+      meta: { title: 'Upload Study Material' },
+    },
+    {
+      path: '/kuppi-sessions/study-materials/:category',
+      name: 'StudyMaterialsCategory',
+      component: () => import('../views/KuppiSessions/StudyMaterialsCategory.vue'),
+      meta: { title: 'Study Materials by Category' },
+    },
+    // Sub-Feature: Q&A Forum
+    {
+      path: '/kuppi-sessions/qa',
+      name: 'QAPage',
+      component: () => import('../views/KuppiSessions/QAPage.vue'),
+      meta: { title: 'Q&A Forum' },
+    },
+    {
+      path: '/kuppi-sessions/qa/create',
+      name: 'CreateQuestion',
+      component: () => import('../views/KuppiSessions/CreateQuestion.vue'),
+      meta: { title: 'Ask a Question' },
+    },
+    {
+      path: '/kuppi-sessions/qa/:questionId',
+      name: 'QuestionDetail',
+      component: () => import('../views/KuppiSessions/QuestionDetail.vue'),
+      meta: { title: 'Question Details' },
     },
     {
       path: '/kuppi-sessions-duplicate',
